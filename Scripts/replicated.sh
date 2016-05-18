@@ -1,14 +1,5 @@
 #!/bin/bash
 
-#
-# This script is meant for quick & easy install via:
-#   'curl -sSL https://get.replicated.com/docker | sudo bash'
-# or:
-#   'wget -qO- https://get.replicated.com/docker | sudo bash'
-#
-# This script can also be used for upgrades by re-running on same host.
-#
-
 set -e
 
 READ_TIMEOUT="-t 20"
@@ -35,59 +26,6 @@ sudo ln -s /data/replicated /var/lib/replicated
 
 command_exists() {
     command -v "$@" > /dev/null 2>&1
-}
-
-LSB_DIST=
-detect_lsb_dist() {
-    _dist=
-    if [ -r /etc/os-release ]; then
-        _dist="$(. /etc/os-release && echo "$ID")"
-        _version="$(. /etc/os-release && echo "$VERSION_ID")"
-    elif [ -r /etc/centos-release ]; then
-        # this is a hack for CentOS 6
-        _dist="$(cat /etc/centos-release | cut -d" " -f1)"
-        _version="$(cat /etc/centos-release | cut -d" " -f3 | cut -d "." -f1)"
-    fi
-    if [ -n "$_dist" ]; then
-        _dist="$(echo "$_dist" | tr '[:upper:]' '[:lower:]')"
-        case "$_dist" in
-            ubuntu)
-                echo "UBUNTOOO"
-                oIFS="$IFS"; IFS=.; set -- $_version; IFS="$oIFS";
-                [ $1 -ge 14 ] && LSB_DIST=$_dist
-                ;;
-            debian)
-                echo "DEBIAN"
-                oIFS="$IFS"; IFS=.; set -- $_version; IFS="$oIFS";
-                [ $1 -ge 7 ] && LSB_DIST=$_dist
-                ;;
-            fedora)
-                echo "FEDOARAA"
-                oIFS="$IFS"; IFS=.; set -- $_version; IFS="$oIFS";
-                [ $1 -ge 21 ] && LSB_DIST=$_dist
-                ;;
-            rhel)
-                echo "RHEL"
-                oIFS="$IFS"; IFS=.; set -- $_version; IFS="$oIFS";
-                [ $1 -ge 7 ] && LSB_DIST=$_dist
-                ;;
-            centos)
-                echo "CENTOS"
-                oIFS="$IFS"; IFS=.; set -- $_version; IFS="$oIFS";
-                [ $1 -ge 6 ] && LSB_DIST=$_dist
-                ;;
-            amzn)
-                echo "AMZN"
-                [ "$_version" = "2016.03" ] || \
-                [ "$_version" = "2015.03" ] || [ "$_version" = "2015.09" ] || \
-                [ "$_version" = "2014.03" ] || [ "$_version" = "2014.09" ] && \
-                LSB_DIST=$_dist
-                # TODO: docker install fails on amzn 2014.03
-                # as of now its possible to install docker manually and run this
-                # script with "| sudo bash -s no-docker"
-                ;;
-        esac
-    fi
 }
 
 detect_init_system() {
@@ -460,8 +398,6 @@ if [ "$user" != "root" ]; then
     echo >&2 "Error: This script requires admin privileges. Please re-run it as root."
     exit 1
 fi
-
-detect_lsb_dist
 
 detect_init_system
 
