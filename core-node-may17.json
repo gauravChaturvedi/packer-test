@@ -1,7 +1,10 @@
 {
   "variables": {
     "aws_access_key": "{{env `aws_access_key`}}",
-    "aws_secret_key": "{{env `aws_secret_key`}}"
+    "aws_secret_key": "{{env `aws_secret_key`}}",
+    "replicated_tag": "latest",
+    "replicated_ui_tag": "latest",
+    "replicated_operator_tag": "latest"
   },
   "builders": [{
     "type": "amazon-ebs",
@@ -17,7 +20,7 @@
   "provisioners": [
     {
       "type": "shell",
-      "execute_command": "echo 'core' | {{ .Vars }} sudo -E -S /bin/bash '{{ .Path }}'",
+      "execute_command": "echo 'core' | REPLICATED_TAG={{ user `replicated_tag` }} REPLICATED_UI_TAG={{ user `replicated_ui_tag` }} REPLICATED_OPERATOR_TAG={{ user `replicated_operator_tag` }} sudo -E -S /bin/bash '{{ .Path }}'",
       "scripts": [
         "scripts/replicated.sh"
       ]
