@@ -39,7 +39,6 @@ command_exists() {
 
 LSB_DIST=
 detect_lsb_dist() {
-    echo "detect_lsb_dist*******"
     _dist=
     if [ -r /etc/os-release ]; then
         _dist="$(. /etc/os-release && echo "$ID")"
@@ -49,9 +48,7 @@ detect_lsb_dist() {
         _dist="$(cat /etc/centos-release | cut -d" " -f1)"
         _version="$(cat /etc/centos-release | cut -d" " -f3 | cut -d "." -f1)"
     fi
-    echo "these is the _dist " $_dist
-    if [ -n "$_dist" == "" ]; then
-        echo "Inside the if case deoude buddy"
+    if [ -n "$_dist" ]; then
         _dist="$(echo "$_dist" | tr '[:upper:]' '[:lower:]')"
         case "$_dist" in
             ubuntu)
@@ -91,17 +88,11 @@ detect_lsb_dist() {
                 ;;
         esac
     fi
-    echo "these are the " $LSB_DIST
 }
 
 detect_init_system() {
-    echo "detect_init_system*******"
-    if [[ "`/sbin/init --version 2>/dev/null`" =~ upstart ]]; then
-        INIT_SYSTEM=upstart
-    elif [[ "`systemctl 2>/dev/null`" =~ -\.mount ]]; then
+    if [[ "`systemctl 2>/dev/null`" =~ -\.mount ]]; then
         INIT_SYSTEM=systemd
-    elif [ -f /etc/init.d/cron ] && [ ! -h /etc/init.d/cron ]; then
-        INIT_SYSTEM=sysvinit
     else
         echo >&2 "Error: failed to detect init system or unsupported."
         exit 1
@@ -109,20 +100,19 @@ detect_init_system() {
 }
 
 read_replicated_conf() {
-echo "read replicated coanf*******"
     unset REPLICATED_CONF_VALUE
     if [ -f /etc/replicated.conf ]; then
+        echo "displaying file"
+        cat /etc/replicated.conf
         REPLICATED_CONF_VALUE=$(cat /etc/replicated.conf | grep -o "\"$1\":\s*\"[^\"]*" | sed "s/\"$1\":\s*\"//") || true
     fi
 }
 
 read_replicated_opts() {
-echo "read replicated opts*******"
     REPLICATED_OPTS_VALUE="$(echo "$REPLICATED_OPTS" | grep -o "$1=[^ ]*" | cut -d'=' -f2)"
 }
 
 ask_for_private_ip() {
-echo "ask for private IP*******"
     _count=0
     _regex="^[[:digit:]]+: ([^[:space:]]+)[[:space:]]+[[:alnum:]]+ ([[:digit:].]+)"
     while read -r _line; do
@@ -165,7 +155,6 @@ echo "ask for private IP*******"
 }
 
 discover_private_ip() {
-echo "discover private IP*******"
     if [ -n "$PRIVATE_ADDRESS" ]; then
         return
     fi
@@ -231,7 +220,6 @@ get_daemon_token() {
 }
 
 remove_docker_containers() {
-echo "remove doacker containers*******"
     # try twice because of aufs error "Unable to remove filesystem"
     if docker inspect replicated &>/dev/null; then
         set +e
@@ -260,20 +248,17 @@ echo "remove doacker containers*******"
 }
 
 pull_docker_images() {
-echo "PULL DOACKER IMAGES*******"
     docker pull $REPLICATED_DOCKER_HOST/replicated/replicated:$REPLICATED_TAG
     docker pull $REPLICATED_DOCKER_HOST/replicated/replicated-ui:$REPLICATED_UI_TAG
 }
 
 load_docker_images() {
-echo "LOAD DOACKER IMAGES*******"
     docker load < replicated.tar
     docker load < replicated-ui.tar
 }
 
 REPLICATED_OPTS=
 build_replicated_opts() {
-echo "BUILD REPLICATED OPTS*******"
     if [ -n "$REPLICATED_OPTS" ]; then
         return
     fi
@@ -290,7 +275,6 @@ echo "BUILD REPLICATED OPTS*******"
 }
 
 write_replicated_configuration() {
-echo "write replicated coanf*******"
     cat > $CONFDIR/replicated <<-EOF
 RELEASE_CHANNEL=$RELEASE_CHANNEL
 DOCKER_HOST_IP=$DOCKER_HOST_IP
@@ -301,7 +285,6 @@ EOF
 }
 
 write_systemd_services() {
-echo "write sustemd services*******"
     cat > /etc/systemd/system/replicated.service <<-EOF
 [Unit]
 Description=Replicated Service
@@ -361,7 +344,6 @@ EOF
 }
 
 stop_systemd_services() {
-echo "stoap systemd services*******"
     if systemctl status replicated &>/dev/null; then
         systemctl stop replicated
     fi
@@ -371,7 +353,6 @@ echo "stoap systemd services*******"
 }
 
 start_systemd_services() {
-echo "start systemd services again*******"
     systemctl enable replicated
     systemctl enable replicated-ui
     systemctl start replicated
@@ -379,7 +360,6 @@ echo "start systemd services again*******"
 }
 
 install_alias_file() {
-echo "install alias file*******"
     # Old script might have mounted this file when it didn't exist, and now it's a folder.
     if [ -d "/etc/replicated.alias" ]; then
       rm -rf /etc/replicated.alias
@@ -414,7 +394,6 @@ EOF
 }
 
 install_operator() {
-echo "install operator*******"
     prefix="/$RELEASE_CHANNEL"
     if [ "$prefix" = "/stable" ]; then
         prefix=
@@ -451,7 +430,6 @@ echo "install operator*******"
 }
 
 outro() {
-echo "outro*******"
     if [ -z "$PUBLIC_ADDRESS" ]; then
         PUBLIC_ADDRESS="<this_server_address>"
     fi
